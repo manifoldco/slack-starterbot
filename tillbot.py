@@ -1,7 +1,9 @@
 import os
 import time
 import re
+import json
 from slackclient import SlackClient
+from pytill import pytill
 
 
 # instantiate Slack client
@@ -11,7 +13,7 @@ starterbot_id = None
 
 # constants
 RTM_READ_DELAY = 1 # 1 second delay between reading from RTM
-EXAMPLE_COMMAND = "do"
+COMMAND_SMS = "sms"
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 
 def parse_bot_commands(slack_events):
@@ -41,13 +43,17 @@ def handle_command(command, channel):
         Executes bot command if the command is known
     """
     # Default response is help text for the user
-    default_response = "Not sure what you mean. Try *{}*.".format(EXAMPLE_COMMAND)
+    default_response = "Not sure what you mean. Try *{}*.".format(COMMAND_SMS)
 
     # Finds and executes the given command, filling in response
     response = None
-    # This is where you start to implement more commands!
-    if command.startswith(EXAMPLE_COMMAND):
-        response = "Sure...write some more code then I can do that!"
+
+    # Command is to send an SMS
+    if command.startswith(COMMAND_SMS):
+        data = command.split(" ",2) #maxsplit
+        pytill.send_message([data[1]], data[2])
+        response = "Text sent to " + data[1]
+
 
     # Sends the response back to the channel
     slack_client.api_call(
