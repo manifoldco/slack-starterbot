@@ -14,6 +14,7 @@ starterbot_id = None
 # constants
 RTM_READ_DELAY = 1 # 1 second delay between reading from RTM
 COMMAND_SMS = "sms"
+COMMAND_ASK = "ask"
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 
 def parse_bot_commands(slack_events):
@@ -50,9 +51,11 @@ def handle_command(command, channel):
 
     # Command is to send an SMS
     if command.startswith(COMMAND_SMS):
-        data = command.split(" ",2) #maxsplit
-        pytill.send_message([data[1]], data[2])
-        response = "Text sent to " + data[1]
+        response = send_sms(command)
+    
+        # Command is to send an SMS
+    if command.startswith(COMMAND_ASK):
+        response = send_sms_question(command, webhook)
 
 
     # Sends the response back to the channel
@@ -61,6 +64,19 @@ def handle_command(command, channel):
         channel=channel,
         text=response or default_response
     )
+
+def send_sms(command):
+    data = command.split(" ", 2) # maxsplit
+    pytill.send_message([data[1]], data[2])
+    response = "Text sent to {}".format(data[1])
+    return response
+
+def send_sms_question(command, webhook):
+    data = command.split(" ", 2) # maxsplit
+    question = pytill.make_question(data[2], "{}-tag".format(data[2]), webhook)
+    pytill.send_question([data[1]], [question], "{}-project-tag".format(data[2]))
+    response = "Question sent to {} listening for answers...".format(data[1])
+    return response
 
 if __name__ == "__main__":
     if slack_client.rtm_connect(with_team_state=False):
