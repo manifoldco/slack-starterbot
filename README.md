@@ -13,8 +13,15 @@ plugged together.
 2. Set up a project in Manifold called `till-mobile`
 3. Provision a till mobile instance in manifold inside that project
 4. Set up a slack Bot, add its key to your till mobile project as a custom resource
+5. Turn on ngrok and set PUBLIC_ADDR in your env to your incoming https url
 5. `manifold run -p till-demo python tillbot.py`
 6. Invite the bot into a channel and SMS away :-)
+
+Send sms messages `@tillbot sms 10DIGITNUMBER Hello this is a test message`
+
+Ask questions via sms `@tillbot ask 10DIGITNUMBER what is the meaning of life?`
+
+# How to build the bot
 
 ## Requires
 
@@ -23,7 +30,7 @@ plugged together.
 - [virtualenv](https://virtualenv.pypa.io/en/stable/)
 - Based on a fork of [this demo Bot](https://www.fullstackpython.com/blog/build-first-slack-bot-python.html)
 
-### Set up your local environment
+## Set up your local environment
 
 ```
 virtualenv till_slack
@@ -33,7 +40,7 @@ pip3 install slackclient
 pip install pytill
 ```
 
-# Set up Till Mobile and Slack API
+## Set up Till Mobile and Slack API
 
 1. Set up a project in Manifold to store secrets in and add till mobile ```manifold projects create till-demo```
 2. Go and get Till Moble `manifold create -p till-demo` and select `till` , choosing the plan you want (I chose `free`).  I also gave mine a fun name like 'till-demo-account' for the resource name.
@@ -72,10 +79,9 @@ Your configuration has been updated.
 ```
 
 ## Sanity Check
-Lets sanity check we can actually talk to slack using manifold cli:
-1. With virtualenv active (`source bin/active`):
-  1. `manifold run -p till-demo python`
-  2. And inside the Python REPL enter the following:
+Lets sanity check we can actually talk to slack using manifold cli, with virtualenv active (`source bin/active`)
+1. `manifold run -p till-demo python`
+2. And inside the Python REPL enter the following:
 ```
 import os
 from pytill import pytil
@@ -91,21 +97,14 @@ This should return back something like:
 As well as a test txt message.  We now know we can talk to slack as well as send texts, time to plug it all together.
 
 
-# Making the bot
-You can clone this repo to get the working code, I'll explain a bit of the logic here:
+## The code
+You can clone this repo to get the working code, I'll explain a bit of the logic here,
 
-1. In order to make the bot, we simply need to listen to slack and watch for our bot to be mentioned.
-2. From there, we need to parse the command we are looking for and send the message.
-3. To send the message, we use [pytill](https://github.com/manifoldco/pytill) from `pytill import pytill`
-4. And to parse and send the SMS  command (Line [52](https://github.com/manifoldco/tillmobile-demo/blob/master/tillbot.py#L52)):
-```
-# Command is to send an SMS
-if command.startswith(COMMAND_SMS):
-    data = command.split(" ",2) #maxsplit
-    pytill.send_message([data[1]], data[2])
-    response = "Text sent to " + data[1]```
-```
-where COMMAND_SMS is `COMMAND_SMS = "sms"` (Line [16](https://github.com/manifoldco/tillmobile-demo/blob/master/tillbot.py#L16))
+1. We need to listen to slack and watch for our bot to be mentioned.
+2. From there, parse the command we are looking for and send the message.
+3. To send the message, use [pytill](https://github.com/manifoldco/pytill) from `pytill import pytill`
+4. To parse and send the SMS  command (Line [59](https://github.com/manifoldco/tillmobile-demo/blob/master/tillbot.py#L59)):
+where COMMAND_SMS is `COMMAND_SMS = "sms"` (Line [22](https://github.com/manifoldco/tillmobile-demo/blob/master/tillbot.py#L22))
 
 5. Now we simply turn this code on `manifold run -p till-demo python tillbot.py`
 
@@ -113,11 +112,24 @@ where COMMAND_SMS is `COMMAND_SMS = "sms"` (Line [16](https://github.com/manifol
 - In slack, go and invite your bot into a channel (I called mine tillbot, I know, original)
 - Go ahead and send yourself a message `@tillbot sms 10DIGITNUMBER Hello this is a test message` and that number should get a nice shinny text message!
 
-## Where to go next
-By plugging in flask, setting up a webhook, you could do question answers from slack, using the pytill `send_question` function, or even expand out to make it an interactive slack bot with drop downs and action buttons.
+## Make it bi-direction
+
+At this point the bot can send sms messages, amazing, but what if we want to ask questions and get the inbound sms back?  To get this we need to set up an incoming webhook (using flask in this example) and a few more bits and pieces.
+
+Take a look at function `send_sms_question` (Line [80](https://github.com/manifoldco/tillmobile-demo/blob/master/tillbot.py#L80)) to see how we now leverage `pytill.make_question` in combination with adding a webhook `app.route(WEBHOOK_ADDR`
+
+Lastly you need to set PUBLIC_ADDR in your env, if locally testing use `ngrok` to get yourself an incoming url.
+
+Now you can ask questions via:
+`@tillbot ask 10DIGITNUMBER what do you want for lunch`
+
+The number will get the sms, and be able to reply with `new phone, who dis?`, or perhaps an actual answer if they so choose :-)
+
+## Possible Improvements
+- Use slack's api to pull accept @mentions instead of actual numbers, and pull their phone number from the profile to send the messages :-)
 
 
-## Credits
+# Credits
 Based on a fork of `slack-starterbot` by Matt Makai
 
 `A simple Python-powered starter Slack bot`
