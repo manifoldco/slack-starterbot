@@ -106,7 +106,7 @@ def webhook():
     slack_client.api_call(
         "chat.postMessage",
         channel=req_data['question_tag'],
-        text=req_data['result_answer']
+        text="[{}]: {}".format(req_data['participant_phone_number'], req_data['result_answer'])
     )
     return 'OK'
 
