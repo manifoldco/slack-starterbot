@@ -1,4 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import Process
 import os
 import time
 import re
@@ -15,6 +15,7 @@ starterbot_id = None
 
 # constants
 CHANNEL = ""
+BOT_RUNNING = False
 PUBLIC_ADDR = os.getenv("PUBLIC_ADDR")
 WEBHOOK_ADDR = '/webhook/listen'
 RTM_READ_DELAY = 1 # 1 second delay between reading from RTM
@@ -22,7 +23,7 @@ COMMAND_SMS = "sms"
 COMMAND_ASK = "ask"
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 
-def parse_bot_commands(slack_events):
+def parse_bot_commands(slack_events, starterbot_id):
     """
         Parses a list of events coming from the Slack RTM API to find bot commands.
         If a bot command is found, this function returns a tuple of command and channel.
@@ -44,7 +45,7 @@ def parse_direct_mention(message_text):
     # the first group contains the username, the second group contains the remaining message
     return (matches.group(1), matches.group(2).strip()) if matches else (None, None)
 
-def handle_command(command):
+def handle_command(command, channel):
     """
         Executes bot command if the command is known
     """
@@ -60,13 +61,13 @@ def handle_command(command):
     
         # Command is to send an SMS
     if command.startswith(COMMAND_ASK):
-        response = send_sms_question(command)
+        response = send_sms_question(command, channel)
 
 
     # Sends the response back to the channel
     slack_client.api_call(
         "chat.postMessage",
-        channel=CHANNEL,
+        channel=channel,
         text=response or default_response
     )
 
@@ -76,27 +77,12 @@ def send_sms(command):
     response = "Text sent to {}".format(data[1])
     return response
 
-def send_sms_question(command):
+def send_sms_question(command, channel):
     data = command.split(" ", 2) # maxsplit
-    question = pytill.make_question(data[2], "{}-tag".format(data[2]), PUBLIC_ADDR + WEBHOOK_ADDR)
-    pytill.send_question([data[1]], [question], "{}-project-tag".format(data[2]))
+    question = pytill.make_question(data[2], channel, PUBLIC_ADDR + WEBHOOK_ADDR)
+    pytill.send_question([data[1]], [question], "{}-tag".format(data[2]))
     response = "Question sent to {} listening for answers on {}".format(data[1], PUBLIC_ADDR + WEBHOOK_ADDR)
     return response
-
-app = Flask(__name__)
-
-@app.route(WEBHOOK_ADDR, methods = ['POST'])
-def webhook():
-    req_data = request.get_json()
-    response = req_data['result_response']
-    slack_client.api_call(
-        "chat.postMessage",
-        channel=CHANNEL,
-        text=response
-    )
-
-def run_flask():
-    app.run(debug=True)
 
 def run_slack_bot():
     if slack_client.rtm_connect(with_team_state=False):
@@ -104,14 +90,28 @@ def run_slack_bot():
         # Read bot's user ID by calling Web API method `auth.test`
         starterbot_id = slack_client.api_call("auth.test")["user_id"]
         while True:
-            command, CHANNEL = parse_bot_commands(slack_client.rtm_read())
+            command, channel = parse_bot_commands(slack_client.rtm_read(), starterbot_id)
             if command:
-                handle_command(command)
+                handle_command(command, channel)
             time.sleep(RTM_READ_DELAY)
     else:
         print("Connection failed. Exception traceback printed above.")
 
+app = Flask(__name__)
+
+@app.route(WEBHOOK_ADDR, methods = ['POST'])
+def webhook():
+    req_data = request.get_json()
+    print("Got {}".format(req_data['result_answer']))
+    slack_client.api_call(
+        "chat.postMessage",
+        channel=req_data['question_tag'],
+        text=req_data['result_answer']
+    )
+    return 'OK'
+
 if __name__ == "__main__":
-    executor = ThreadPoolExecutor(max_workers=2)
-    executor.submit(run_flask)
-    executor.submit(run_slack_bot)
+    p = Process(target=run_slack_bot, args=())
+    p.start()
+    app.run(debug=True, port=8181, use_reloader=False)
+    
