@@ -81,7 +81,7 @@ def send_sms_question(command, channel):
     data = command.split(" ", 2) # maxsplit
     question = pytill.make_question(data[2], channel, PUBLIC_ADDR + WEBHOOK_ADDR)
     pytill.send_question([data[1]], [question], "{}-tag".format(data[2]))
-    response = "Question sent to {} listening for answers on {}".format(data[1], PUBLIC_ADDR + WEBHOOK_ADDR)
+    response = "Question sent to {} listening for answers...".format(data[1])
     return response
 
 def run_slack_bot():
