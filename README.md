@@ -11,8 +11,8 @@ plugged together.
 ## TL;DR
 1. Clone this repo
 2. Set up a project in Manifold called `till-mobile`
-3. Provision a till mobile instance in manifold inside that project
-4. Set up a slack Bot, add its key to your till mobile project as a custom resource
+3. Provision a Till Mobile instance in manifold inside that project
+4. Set up a slack Bot, add its key to your Till Mobile project as a custom resource
 5. Turn on ngrok and set PUBLIC_ADDR in your env to your incoming https url
 5. `manifold run -p till-demo python tillbot.py`
 6. Invite the bot into a channel and SMS away :-)
@@ -42,7 +42,7 @@ pip install pytill
 
 ## Set up Till Mobile and Slack API
 
-1. Set up a project in Manifold to store secrets in and add till mobile ```manifold projects create till-demo```
+1. Set up a project in Manifold to store secrets in and add Till Mobile ```manifold projects create till-demo```
 2. Go and get Till Moble `manifold create -p till-demo` and select `till` , choosing the plan you want (I chose `free`).  I also gave mine a fun name like 'till-demo-account' for the resource name.
 ```
  manifold create -p till-demo
@@ -54,14 +54,14 @@ pip install pytill
 ✔ New Resource Title: Till Demo Account
 An instance named "Till Demo Account" has been created!
 ```
-3. Check to make sure its all good via:
+3. Check to make sure it's all good via:
 ```
 $ manifold export -p till-demo
 # Till Demo Account
 API_KEY=<YOURAPIKEY>
 USERNAME=<YOURUSERNAME>
 ```
-4. For fun, we are going to create a custom resource called "Slack" while we are here, we can use this to store a Slack api key we will get a bit later. `manifold create -p till-demo -c`, I gave it a name like `till-demo-slack-api`
+4. For fun, we are going to create a custom resource called "Slack" while we are here; we'll be using this to store a Slack api key we will get a bit later. `manifold create -p till-demo -c`, I gave it a name like `till-demo-slack-api`
 ```
 $ manifold create -p till-demo -c
 ✔ Project: till-demo (Till Demo)
@@ -79,7 +79,7 @@ Your configuration has been updated.
 ```
 
 ## Sanity Check
-Lets sanity check we can actually talk to slack using manifold cli, with virtualenv active (`source bin/active`)
+Let's sanity check we can actually talk to slack using Manifold cli, with virtualenv active (`source bin/active`)
 1. `manifold run -p till-demo python`
 2. And inside the Python REPL enter the following:
 ```
@@ -126,7 +126,7 @@ Now you can ask questions via:
 The number will get the sms, and be able to reply with `new phone, who dis?`, or perhaps an actual answer if they so choose :-)
 
 ## Possible Improvements
-- Use slack's api to pull accept @mentions instead of actual numbers, and pull their phone number from the profile to send the messages :-)
+- Use slack's api to accept @mentions instead of actual numbers, and pull their phone number from the profile to send the messages :-)
 
 
 # Credits
