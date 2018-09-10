@@ -8,12 +8,12 @@ do sms voting systems while you are having a retro meeting.  Or really, just for
 In this code we piece together Till Mobile, a slackbot, and the manifold cli to quickly get it all
 plugged together.
 
-## TL;DR
+## Quick Start
 1. Clone this repo
 2. Set up a project in Manifold called `till-mobile`
 3. Provision a till mobile instance in manifold inside that project
 4. Set up a slack Bot, add its key to your till mobile project as a custom resource
-5. Turn on ngrok and set PUBLIC_ADDR in your env to your incoming https url
+5. Turn on ngrok `ngrok 8181` and set PUBLIC_ADDR in your env to your incoming http url
 5. `manifold run -p till-demo python tillbot.py`
 6. Invite the bot into a channel and SMS away :-)
 
